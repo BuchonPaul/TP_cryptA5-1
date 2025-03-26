@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_ULL 18446744073709551615ULL;
 
@@ -14,20 +15,9 @@ void print_binary(unsigned long long int n, int size)
 {
     for (int i = size - 1; i >= 0; i--)
     {
-        printf("%llu%c", (n >> i) & 1, i % 4 == 0 ? ' ' : '\0');
+        printf("%llu%c", (n >> i) & 1, i % 8 == 0 ? ' ' : '\0');
     }
     printf("");
-}
-
-void print_lsfr(int n, char lsfr_id, int size)
-{
-    // int delta = 32 - size;
-    printf("LSFR_%d (%d bits):\t", lsfr_id, size);
-    for (int i = 0; i < size; i++)
-    {
-        printf("%d%c", (n >> i) & 1, (i + 1) % 4 == 0 ? ' ' : '\0');
-    }
-    printf("\n");
 }
 
 short i_bit(int num, int position)
@@ -87,41 +77,64 @@ LSFR initialize_registers(unsigned long long session_key, int frame_counter)
     return l;
 }
 
+char *xor_message(LSFR lsfr, char *message, int length)
+{
+    char *xor_msg = malloc(length + 1);
+    if (!xor_msg)
+        return NULL;
+
+    for (int i = 0; i < length; i++)
+    {
+        char buffer = 0;
+        for (int j = 0; j < 8; j++)
+        {
+            int maj = (i_bit(lsfr.l1, 8) + i_bit(lsfr.l2, 10) + i_bit(lsfr.l3, 10)) >= 2 ? 1 : 0;
+            if (i_bit(lsfr.l1, 8) == maj)
+                lsfr.l1 = (lsfr.l1 << 1) | xor_l1(lsfr.l1);
+            if (i_bit(lsfr.l2, 10) == maj)
+                lsfr.l2 = (lsfr.l2 << 1) | xor_l1(lsfr.l2);
+            if (i_bit(lsfr.l3, 10) == maj)
+                lsfr.l3 = (lsfr.l3 << 1) | xor_l1(lsfr.l3);
+
+            if (xor_l1(lsfr.l1) ^ xor_l1(lsfr.l2) ^ xor_l1(lsfr.l3) == 0)
+                buffer &= ~(1 << j); // Add 0
+            else
+                buffer |= (1 << j); // ADd 1
+        }
+        xor_msg[i] = message[i] ^ buffer;
+    }
+    xor_msg[length] = '\0';
+    return xor_msg;
+}
 int main()
 {
     unsigned long long int session_key = 0b0100111000101111010011010111110000011110101110001000101100111010;
     int frame_counter = 0b1110101011001111001011;
-    LSFR lsfr = initialize_registers(session_key, frame_counter);
 
-    char message[] = "salut cest moi";
+    LSFR lsfr = initialize_registers(session_key, frame_counter);
+    char message[] = "Salut c'est Nous";
     int length = 0;
     while (message[length] != '\0')
         length++;
+
     printf("\nOriginal message:\n\t%s\n", message);
-    printf("Binary Original message :\n\t");
+    printf("Original binary:\n\t");
     for (int i = 0; i < length; i++)
     {
         print_binary(message[i], 8);
     }
-    char encrypted_message[length];
-    for (int i = 0; i < length; i++)
-    {
-        int maj = (i_bit(lsfr.l1, 8) + i_bit(lsfr.l2, 10) + i_bit(lsfr.l3, 10)) >= 2 ? 1 : 0;
 
-        if (i_bit(lsfr.l1, 8) == maj)
-            lsfr.l1 = (lsfr.l1 << 1) | xor_l1(lsfr.l1);
-        if (i_bit(lsfr.l2, 10) == maj)
-            lsfr.l2 = (lsfr.l2 << 1) | xor_l1(lsfr.l2);
-        if (i_bit(lsfr.l3, 10) == maj)
-            lsfr.l3 = (lsfr.l3 << 1) | xor_l1(lsfr.l3);
+    char *encrypted_message = xor_message(lsfr, message, length);
+    printf("\nEncrypted message:\n\t%s\n", encrypted_message);
 
-        encrypted_message[i] = message[i] ^ (i_bit(lsfr.l1, 18) ^ i_bit(lsfr.l2, 21) ^ i_bit(lsfr.l3, 22));
-    }
-
-    printf("\nCiffer Binary Original message:\n\t");
+    printf("\nEncrypted binary:\n\t");
     for (int i = 0; i < length; i++)
     {
         print_binary(encrypted_message[i], 8);
     }
+
+    lsfr = initialize_registers(session_key, frame_counter);
+    char *decrypted_message = xor_message(lsfr, encrypted_message, length);
+    printf("\nDecrypted message:\n\t%s\n", decrypted_message);
     return 0;
 }

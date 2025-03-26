@@ -1,0 +1,79 @@
+
+    printf("\nLSFRS initial states:\n");
+    print_lsfr(lsfr_1, 1, 19);
+    print_lsfr(lsfr_2, 2, 22);
+    print_lsfr(lsfr_3, 3, 23);
+
+    for (int i = 63; i >= 0; i--)
+    {
+        short sk_b = llu_bit(session_key, i - 1);
+        short l1_b = sk_b ^ int_bit(lsfr_1, 18) ^ int_bit(lsfr_1, 17) ^ int_bit(lsfr_1, 16) ^ int_bit(lsfr_1, 13);
+        short l2_b = sk_b ^ int_bit(lsfr_2, 20) ^ int_bit(lsfr_2, 21);
+        short l3_b = sk_b ^ int_bit(lsfr_3, 7) ^ int_bit(lsfr_3, 20) ^ int_bit(lsfr_3, 21) ^ int_bit(lsfr_3, 22);
+        lsfr_1 = (lsfr_1 << 1) | l1_b;
+        lsfr_2 = (lsfr_2 << 1) | l2_b;
+        lsfr_3 = (lsfr_3 << 1) | l3_b;
+    }
+    printf("\nLSFRS state after adding session_key - 64 cycles:\n");
+    printf("Session Key:\t");
+    print_binary(session_key, 64);
+    print_lsfr(lsfr_1, 1, 19);
+    print_lsfr(lsfr_2, 2, 22);
+    print_lsfr(lsfr_3, 3, 23);
+
+    for (int i = 21; i >= 0; i--)
+    {
+        short fc_b = llu_bit(frame_counter, i - 1);
+        short l1_b = fc_b ^ int_bit(lsfr_1, 18) ^ int_bit(lsfr_1, 17) ^ int_bit(lsfr_1, 16) ^ int_bit(lsfr_1, 13);
+        short l2_b = fc_b ^ int_bit(lsfr_2, 20) ^ int_bit(lsfr_2, 21);
+        short l3_b = fc_b ^ int_bit(lsfr_3, 7) ^ int_bit(lsfr_3, 20) ^ int_bit(lsfr_3, 21) ^ int_bit(lsfr_3, 22);
+        lsfr_1 = (lsfr_1 << 1) | l1_b;
+        lsfr_2 = (lsfr_2 << 1) | l2_b;
+        lsfr_3 = (lsfr_3 << 1) | l3_b;
+    }
+    printf("\nLSFRS state after frame_counter - 22 cycles:\n");
+    printf("Session Key:\t");
+    print_binary(frame_counter, 22);
+    print_lsfr(lsfr_1, 1, 19);
+    print_lsfr(lsfr_2, 2, 22);
+    print_lsfr(lsfr_3, 3, 23);
+
+    for (int i = 100; i > 0; i--)
+    {
+        int maj = (int_bit(lsfr_1, 8) + int_bit(lsfr_2, 10) + int_bit(lsfr_3, 10)) >= 2 ? 1 : 0;
+        short l1_b = int_bit(lsfr_1, 18) ^ int_bit(lsfr_1, 17) ^ int_bit(lsfr_1, 16) ^ int_bit(lsfr_1, 13);
+        short l2_b = int_bit(lsfr_2, 20) ^ int_bit(lsfr_2, 21);
+        short l3_b = int_bit(lsfr_3, 7) ^ int_bit(lsfr_3, 20) ^ int_bit(lsfr_3, 21) ^ int_bit(lsfr_3, 22);
+        if (int_bit(lsfr_1, 8) == maj)
+            lsfr_1 = (lsfr_1 << 1) | l1_b;
+        if (int_bit(lsfr_2, 8) == maj)
+            lsfr_2 = (lsfr_2 << 1) | l2_b;
+        if (int_bit(lsfr_3, 8) == maj)
+            lsfr_3 = (lsfr_3 << 1) | l3_b;
+    }
+    printf("\nLSFRS state initializing the register - 100 cycles:\n");
+    printf("Session Key:\t");
+    print_binary(frame_counter, 22);
+    print_lsfr(lsfr_1, 1, 19);
+    print_lsfr(lsfr_2, 2, 22);
+    print_lsfr(lsfr_3, 3, 23);
+
+    char message[] = "salut cest moi";
+    printf("%s\n", message);
+    for (int i = 0; i < 15; i++)
+    {
+        int maj = (int_bit(lsfr_1, 8) + int_bit(lsfr_2, 10) + int_bit(lsfr_3, 10)) >= 2 ? 1 : 0;
+
+        if (int_bit(lsfr_1, 8) == maj)
+            lsfr_1 =
+                (lsfr_1 << 1) | (int_bit(lsfr_1, 18) ^ int_bit(lsfr_1, 17) ^ int_bit(lsfr_1, 16) ^ int_bit(lsfr_1, 13));
+
+        if (int_bit(lsfr_2, 10) == maj)
+            lsfr_2 = (lsfr_2 << 1) | (int_bit(lsfr_2, 20) ^ int_bit(lsfr_2, 21));
+
+        if (int_bit(lsfr_3, 10) == maj)
+            lsfr_3 =
+                (lsfr_3 << 1) | (int_bit(lsfr_3, 7) ^ int_bit(lsfr_3, 20) ^ int_bit(lsfr_3, 21) ^ int_bit(lsfr_3, 22));
+        message[i] ^= (int_bit(lsfr_1, 18) ^ int_bit(lsfr_2, 21) ^ int_bit(lsfr_3, 22));
+    }
+    printf("%s\n", message);

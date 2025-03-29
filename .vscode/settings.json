@@ -5,6 +5,7 @@
     "ratio": "c",
     "__locale": "c",
     "string": "c",
-    "string_view": "c"
+    "string_view": "c",
+    "sstream": "c"
   }
 }

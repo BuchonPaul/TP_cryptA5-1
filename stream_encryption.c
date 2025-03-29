@@ -11,13 +11,18 @@ typedef struct LSFR
     int l3;
 } LSFR;
 
-void print_binary(unsigned long long int n, int size)
+void print_message_bits(char *message)
 {
-    for (int i = size - 1; i >= 0; i--)
+    while (*message)
     {
-        printf("%llu%c", (n >> i) & 1, i % 8 == 0 ? ' ' : '\0');
+        for (int i = 7; i >= 0; i--)
+        {
+            putchar((*message & (1 << i)) ? '1' : '0');
+        }
+        putchar(' ');
+        message++;
     }
-    printf("");
+    putchar('\n');
 }
 
 short i_bit(int num, int position)
@@ -77,14 +82,19 @@ LSFR initialize_registers(unsigned long long session_key, int frame_counter)
     return l;
 }
 
-char *xor_message(LSFR lsfr, char *message, int length)
+char *encrypt_decrypt_message(char *message, int session_key, int frame_counter)
 {
+    int length = 0;
+    while (message[length] != '\0')
+        length++;
+
     char *xor_msg = malloc(length + 1);
     if (!xor_msg)
         return NULL;
 
     for (int i = 0; i < length; i++)
     {
+        LSFR lsfr = initialize_registers(session_key, frame_counter++);
         char buffer = 0;
         for (int j = 0; j < 8; j++)
         {
@@ -111,30 +121,20 @@ int main()
     unsigned long long int session_key = 0b0100111000101111010011010111110000011110101110001000101100111010;
     int frame_counter = 0b1110101011001111001011;
 
-    LSFR lsfr = initialize_registers(session_key, frame_counter);
-    char message[] = "Salut c'est Nous";
-    int length = 0;
-    while (message[length] != '\0')
-        length++;
-
+    printf("\n------------------------------------Original Message---------------------------------------\n");
+    char message[] = "C'est un message crypté!";
     printf("\nOriginal message:\n\t%s\n", message);
     printf("Original binary:\n\t");
-    for (int i = 0; i < length; i++)
-    {
-        print_binary(message[i], 8);
-    }
+    print_message_bits(message);
 
-    char *encrypted_message = xor_message(lsfr, message, length);
-    printf("\nEncrypted message:\n\t%s\n", encrypted_message);
+    printf("\n------------------------------------Encrypt------------------------------------------------\n");
+    char *encrypted_message = encrypt_decrypt_message(message, session_key, frame_counter);
+    printf("Encrypted message:\n\t%s\n", encrypted_message);
+    printf("Encrypted binary:\n\t");
+    print_message_bits(encrypted_message);
 
-    printf("\nEncrypted binary:\n\t");
-    for (int i = 0; i < length; i++)
-    {
-        print_binary(encrypted_message[i], 8);
-    }
-
-    lsfr = initialize_registers(session_key, frame_counter);
-    char *decrypted_message = xor_message(lsfr, encrypted_message, length);
-    printf("\nDecrypted message:\n\t%s\n", decrypted_message);
+    printf("\n------------------------------------Decrypt------------------------------------------------\n");
+    char *decrypted_message = encrypt_decrypt_message(encrypted_message, session_key, frame_counter);
+    printf("Decrypted message:\n\t%s\n", decrypted_message);
     return 0;
 }

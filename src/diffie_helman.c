@@ -77,26 +77,15 @@ int miller_rabin(mpz_t n, int k)
             mpz_mod(x, x, n);
 
             if (mpz_cmp(x, n_1) == 0)
-            {
                 composite = 0;
-                break;
-            }
+            break;
+
             if (mpz_cmp_ui(x, 1) == 0)
-            {
-                mpz_clears(a, x, n_1, NULL);
                 return 0;
-            }
         }
-
-        mpz_clears(a, x, n_1, NULL);
         if (composite)
-        {
-            gmp_randclear(state);
             return 0;
-        }
     }
-
-    gmp_randclear(state);
     return 1;
 }
 void generate_prime(mpz_t prime)
@@ -118,36 +107,4 @@ void generate_prime(mpz_t prime)
         mpz_add_ui(num, num, 2);
     }
     mpz_set(prime, num);
-}
-
-int main()
-{
-    mpz_t p, g, a, b;
-    mpz_inits(p, g, a, b, NULL);
-    mpz_set_ui(p, 23);
-    mpz_set_ui(g, 5);
-    mpz_set_ui(a, 6);
-    mpz_set_ui(b, 15);
-
-    mpz_t A, B;
-    mpz_inits(A, B, NULL);
-
-    square_and_multiply(A, g, a, p);
-    square_and_multiply(B, g, b, p);
-
-    gmp_printf("Alice:\t%Zd\n", a);
-    gmp_printf("Bob:\t%Zd\n", b);
-
-    gmp_printf("Public Alice:\t%Zd\n", A);
-    gmp_printf("Public Bob:\t%Zd\n", B);
-
-    mpz_t secret_Alice, secret_Bob;
-    mpz_init(secret_Alice);
-    mpz_init(secret_Bob);
-    square_and_multiply(secret_Alice, B, a, p);
-    square_and_multiply(secret_Bob, A, b, p);
-
-    gmp_printf("Alice secret:\t%Zd\n", secret_Alice);
-    gmp_printf("Bob secret:\t%Zd\n", secret_Bob);
-    return 0;
 }

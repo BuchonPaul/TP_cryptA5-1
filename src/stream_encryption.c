@@ -21,7 +21,7 @@ short i_bit(int num, int position)
     return (num >> position) & 1;
 }
 
-short llu_bit(unsigned long long int num, int position)
+short llu_bit(long long num, int position)
 {
     return (num >> position) & 1;
 }
@@ -39,7 +39,7 @@ short xor_l3(int lsfr)
     return i_bit(lsfr, 7) ^ i_bit(lsfr, 20) ^ i_bit(lsfr, 21) ^ i_bit(lsfr, 22);
 }
 
-LSFR initialize_registers(unsigned long long session_key, int frame_counter)
+LSFR initialize_registers(long long session_key, int frame_counter)
 {
     LSFR l = {
         .l1 = 0,

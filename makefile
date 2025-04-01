@@ -1,5 +1,4 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Iheader
 BUILD_DIR = build
 SRC_DIR = src
 OBJ_DIR = obj

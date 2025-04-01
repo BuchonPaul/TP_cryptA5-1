@@ -10,5 +10,5 @@ typedef struct LSFR
     int l2;
     int l3;
 } LSFR;
-
+void print_message_bits(char *message);
 char *encrypt_decrypt_message(char *message, int session_key, int frame_counter);

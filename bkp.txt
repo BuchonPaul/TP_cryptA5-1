@@ -252,3 +252,217 @@ int main()
     printf("\nDecrypted message:\n\t%s\n", decrypted_message);
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        mpz_t flag;
+        mpz_init(flag);
+        mpz_add_ui(flag, r, -j);
+        // gmp_printf("flag:\t%Zd\n", flag);
+        for (j = 0; mpz_cmp_ui(flag, j) < 1; j++)
+        {
+            printf("%d", j);
+            mpz_add_ui(flag, r, -j);
+
+
+
+
+
+
+
+
+
+
+
+
+#include <gmp.h>
+#include <inttypes.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+void square_and_multiply(mpz_t result, mpz_t x, mpz_t pow, mpz_t mod)
+{
+    mpz_set_ui(result, 1);
+
+    mpz_t base, e;
+    mpz_init_set(base, x);
+    mpz_init_set(e, pow);
+    mpz_mod(base, base, mod);
+
+    while (mpz_cmp_d(e, 0) > 0)
+    {
+        if (mpz_odd_p(e))
+        {
+            mpz_mul(result, result, base);
+            mpz_mod(result, result, mod);
+        }
+        mpz_fdiv_q_2exp(e, e, 1);
+        mpz_mul(base, base, base);
+        mpz_mod(base, base, mod);
+    }
+    mpz_clears(base, e, NULL);
+}
+
+int miller_rabin(mpz_t n, int k)
+{
+    if (mpz_cmp_ui(n, 1) <= 0)
+        return 0;
+    if (mpz_cmp_ui(n, 2) == 0 || mpz_cmp_ui(n, 3) == 0)
+        return 1;
+    if (mpz_even_p(n))
+        return 0;
+
+    mpz_t d, r;
+    mpz_inits(d, r, NULL);
+    mpz_sub_ui(d, n, 1);
+    mpz_set_ui(r, 0);
+
+    while (mpz_even_p(d))
+    {
+        mpz_fdiv_q_2exp(d, d, 1);
+        mpz_add_ui(r, r, 1);
+    }
+
+    gmp_randstate_t state;
+    gmp_randinit_mt(state);
+
+    for (int i = 0; i < k; i++)
+    {
+        mpz_t a, x;
+        mpz_inits(a, x, NULL);
+
+        mpz_urandomm(a, state, n);
+        mpz_add_ui(a, a, 2);
+
+        square_and_multiply(x, a, d, n);
+        if (mpz_cmp_ui(x, 1) == 0 || mpz_cmp(x, n) == 0)
+        {
+            mpz_clears(a, x, NULL);
+            continue;
+        }
+        for (int j = 0; mpz_cmp_ui(r, j) > 0; j++)
+        {
+            square_and_multiply(x, x, d, n);
+            if (mpz_cmp_ui(x, 1) == 0)
+                return 0;
+            if (mpz_cmp(x, n - 1) == 0)
+                break;
+        }
+        mpz_clears(a, x, NULL);
+    }
+    gmp_randclear(state);
+    return 1;
+}
+
+void generate_prime(mpz_t prime)
+{
+    int k = 5;
+    gmp_randstate_t state;
+    gmp_randinit_mt(state);
+    gmp_randseed_ui(state, time(NULL));
+
+    mpz_t num;
+    mpz_init(num);
+
+    mpz_urandomb(num, state, 512);
+    mpz_setbit(num, 511);
+    mpz_setbit(num, 0);
+
+    while (!miller_rabin(num, k))
+    {
+        mpz_add_ui(num, num, 2);
+    }
+    mpz_set(prime, num);
+}
+
+int main()
+{
+    mpz_t p, g, a, b;
+    mpz_inits(p, g, a, b, NULL);
+    mpz_set_ui(p, 23);
+    mpz_set_ui(g, 5);
+    mpz_set_ui(a, 6);
+    mpz_set_ui(b, 15);
+
+    mpz_t A, B;
+    mpz_inits(A, B, NULL);
+
+    square_and_multiply(A, g, a, p);
+    square_and_multiply(B, g, b, p);
+
+    gmp_printf("Alice:\t%Zd\n", a);
+    gmp_printf("Bob:\t%Zd\n", b);
+
+    gmp_printf("Public Alice:\t%Zd\n", A);
+    gmp_printf("Public Bob:\t%Zd\n", B);
+
+    mpz_t secret_Alice, secret_Bob;
+    mpz_init(secret_Alice);
+    mpz_init(secret_Bob);
+    square_and_multiply(secret_Alice, B, a, p);
+    square_and_multiply(secret_Bob, A, b, p);
+
+    gmp_printf("Alice secret:\t%Zd\n", secret_Alice);
+    gmp_printf("Bob secret:\t%Zd\n", secret_Bob);
+
+    mpz_t n;
+    mpz_init(n);
+    for (int j = 0; j < 100; j++)
+    {
+        mpz_set_ui(n, j);
+        printf("%d:%d\n", miller_rabin(n, 10), j);
+    }
+    // mpz_t z;
+    // mpz_init(z);
+    // // generate_prime(n);
+    // mpz_set_str(z,
+    //             "733546588834386296813028528884258194147999773077645405190120332944050836799294530383545800813801653097"
+    //             "0254318172965357391199557120543758438497838095839321",
+    //             0);
+    // gmp_printf("z secret:\t%Zd\n", z);
+    // printf("%d\n", miller_rabin(z, 10000));
+    // if (miller_rabin(n, 100000))
+    // {
+    //     printf("%" PRIu64 " est probablement premier.\n", n);
+    // }
+    // else
+    // {
+    //     printf("%llu est composé.\n", n);
+    // }
+    return 0;
+}

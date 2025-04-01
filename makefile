@@ -1,4 +1,6 @@
 CC = gcc
+CFLAGS = -Wall -Wextra -Iheader
+LDFLAGS = -Llib -lgmp
 BUILD_DIR = build
 SRC_DIR = src
 OBJ_DIR = obj
@@ -9,7 +11,7 @@ OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 $(TARGET): $(OBJS)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@

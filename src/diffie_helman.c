@@ -5,108 +5,149 @@
 #include <stdlib.h>
 #include <time.h>
 
-uint64_t square_and_multiply(uint64_t x, uint64_t pow, uint64_t mod)
+void square_and_multiply(mpz_t result, mpz_t x, mpz_t pow, mpz_t mod)
 {
-    uint64_t result = 1;
-    x = x % mod;
-    while (pow > 0)
+    mpz_set_ui(result, 1);
+
+    mpz_t base, e;
+    mpz_init_set(base, x);
+    mpz_init_set(e, pow);
+    mpz_mod(base, base, mod);
+
+    while (mpz_cmp_d(e, 0) > 0)
     {
-        if (pow % 2 == 1)
+        if (mpz_odd_p(e))
         {
-            result = (result * x) % mod;
+            mpz_mul(result, result, base);
+            mpz_mod(result, result, mod);
         }
-        pow = pow / 2;
-        x = ((unsigned __int128)x * x) % mod;
+        mpz_fdiv_q_2exp(e, e, 1);
+        mpz_mul(base, base, base);
+        mpz_mod(base, base, mod);
     }
-    return result;
+    mpz_clears(base, e, NULL);
 }
-
-int miller_rabin(uint64_t n, int k)
+int miller_rabin(mpz_t n, int k)
 {
-    if (n <= 1)
+    if (mpz_cmp_ui(n, 1) <= 0)
         return 0;
-    if (n == 2 || n == 3)
+    if (mpz_cmp_ui(n, 2) == 0 || mpz_cmp_ui(n, 3) == 0)
         return 1;
-    if (n % 2 == 0)
+    if (mpz_even_p(n))
         return 0;
 
-    uint64_t d = n - 1;
-    int r = 0;
-    while (d % 2 == 0)
+    mpz_t d, r;
+    mpz_inits(d, r, NULL);
+    mpz_sub_ui(d, n, 1);
+    mpz_set_ui(r, 0);
+
+    while (mpz_even_p(d))
     {
-        d /= 2;
-        r++;
+        mpz_fdiv_q_2exp(d, d, 1);
+        mpz_add_ui(r, r, 1);
     }
 
-    for (int i = 0; i < k; i++)
+    gmp_randstate_t state;
+    gmp_randinit_mt(state);
+    gmp_randseed_ui(state, time(NULL));
+
+    for (int _ = 0; _ < k; _++)
     {
-        uint64_t a = 2 + ((uint64_t)rand() * rand() % (n - 3));
-        uint64_t x = square_and_multiply(a, d, n);
+        mpz_t a, x, n_1;
+        mpz_inits(a, x, n_1, NULL);
+        mpz_sub_ui(n_1, n, 1);
 
-        if (x == 1 || x == n - 1)
-            continue;
-
-        for (int j = 0; j < r - 1; j++)
+        do
         {
-            x = ((unsigned __int128)x * x) % n;
-            if (x == 1)
-                return 0;
-            if (x == n - 1)
+            mpz_urandomm(a, state, n);
+        } while (mpz_cmp_ui(a, 2) < 0 || mpz_cmp(a, n_1) >= 0);
+
+        square_and_multiply(x, a, d, n);
+
+        if (mpz_cmp_ui(x, 1) == 0 || mpz_cmp(x, n_1) == 0)
+        {
+            mpz_clears(a, x, n_1, NULL);
+            continue;
+        }
+
+        int composite = 1;
+        for (int j = 0; mpz_cmp_ui(r, j + 1) > 0; j++)
+        {
+            mpz_mul(x, x, x);
+            mpz_mod(x, x, n);
+
+            if (mpz_cmp(x, n_1) == 0)
+            {
+                composite = 0;
                 break;
+            }
+            if (mpz_cmp_ui(x, 1) == 0)
+            {
+                mpz_clears(a, x, n_1, NULL);
+                return 0;
+            }
+        }
+
+        mpz_clears(a, x, n_1, NULL);
+        if (composite)
+        {
+            gmp_randclear(state);
+            return 0;
         }
     }
+
+    gmp_randclear(state);
     return 1;
 }
-uint64_t generate_prime()
+void generate_prime(mpz_t prime)
 {
-    int k = 1000000;
-    uint64_t num = ((uint64_t)rand() << 48) | ((uint64_t)rand() << 32) | ((uint64_t)rand() << 16) | rand();
+    int k = 5;
+    gmp_randstate_t state;
+    gmp_randinit_mt(state);
+    gmp_randseed_ui(state, time(NULL));
 
-    if (num % 2 == 0)
-        num++;
+    mpz_t num;
+    mpz_init(num);
+
+    mpz_urandomb(num, state, 512);
+    mpz_setbit(num, 511);
+    mpz_setbit(num, 0);
+
     while (!miller_rabin(num, k))
     {
-        num += 2;
+        mpz_add_ui(num, num, 2);
     }
-    return num;
+    mpz_set(prime, num);
 }
 
 int main()
 {
-    srand(time(NULL));
-    int p = 23;
-    int g = 5;
+    mpz_t p, g, a, b;
+    mpz_inits(p, g, a, b, NULL);
+    mpz_set_ui(p, 23);
+    mpz_set_ui(g, 5);
+    mpz_set_ui(a, 6);
+    mpz_set_ui(b, 15);
 
-    int a = 6;
-    int b = 15;
+    mpz_t A, B;
+    mpz_inits(A, B, NULL);
 
-    uint64_t A = square_and_multiply(g, a, p);
-    uint64_t B = square_and_multiply(g, b, p);
+    square_and_multiply(A, g, a, p);
+    square_and_multiply(B, g, b, p);
 
-    printf("Alice:\t%d\n", a);
-    printf("Bob:\t%d\n", b);
+    gmp_printf("Alice:\t%Zd\n", a);
+    gmp_printf("Bob:\t%Zd\n", b);
 
-    printf("Public Alice:\t%lld\n", A);
-    printf("Public Bob:\t%lld\n", B);
+    gmp_printf("Public Alice:\t%Zd\n", A);
+    gmp_printf("Public Bob:\t%Zd\n", B);
 
-    uint64_t secret_Alice = square_and_multiply(B, a, p);
-    uint64_t secret_Bob = square_and_multiply(A, b, p);
+    mpz_t secret_Alice, secret_Bob;
+    mpz_init(secret_Alice);
+    mpz_init(secret_Bob);
+    square_and_multiply(secret_Alice, B, a, p);
+    square_and_multiply(secret_Bob, A, b, p);
 
-    printf("Alice secret:\t%lld\n", secret_Alice);
-    printf("Bob secret:\t%lld\n", secret_Bob);
-
-    if (secret_Alice == secret_Bob)
-    {
-        printf("La clé secrète partagée est : \t%lld\n", secret_Alice);
-    }
-    uint64_t n = 9222939239367149057;
-    if (miller_rabin(n, 100000))
-    {
-        printf("%" PRIu64 " est probablement premier.\n", n);
-    }
-    else
-    {
-        printf("%llu est composé.\n", n);
-    }
+    gmp_printf("Alice secret:\t%Zd\n", secret_Alice);
+    gmp_printf("Bob secret:\t%Zd\n", secret_Bob);
     return 0;
 }

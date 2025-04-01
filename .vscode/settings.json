@@ -11,6 +11,10 @@
     "time.h": "c",
     "stdlib.h": "c",
     "stdint.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "inttypes.h": "c",
+    "math.h": "c",
+    "gmp.h": "c",
+    "locale": "c"
   }
 }

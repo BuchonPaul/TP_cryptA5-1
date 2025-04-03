@@ -9,7 +9,7 @@ Avant de Run le projet pour la première fois:
 - ```make clean; make libs```
 
 Pour run le projet:
-- ```make clean; make; ./build/main```
+- ```make; ./build/main```
 
 ## 1. Implémentation de A5/1  
 ### 1.1 Initialisation de LSFR
@@ -90,6 +90,6 @@ La traduction du code en gmp a pris beaucoup de temps car toutes les opérations
 
 Les améliorations possibles seraient de rendre interactif le choix des clés pour Alice et de lui permettre de saisir son propre message.
 
-De plus, pour le générateur, nous avons choisi arbitrairement g=3g=3. En effet, nous n'avons pas eu le temps d'implémenter un algorithme de génération en C.
+De plus, pour le générateur, nous avons choisi arbitrairement g=3. En effet, nous n'avons pas eu le temps d'implémenter un algorithme de génération en C.
 
 

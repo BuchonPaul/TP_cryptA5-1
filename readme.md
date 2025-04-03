@@ -69,7 +69,10 @@ Alice chiffre son message avec ```encrypt_decrypt_message``` en utilisant la cl�
 ## 3. Choix d'implémentation et problèmes rencontrés
 
 ### Choix Technique:
-Pour ce projet, nous avons choisi le C notamment car ce .
+Pour ce projet, nous avons choisi le C notamment car ce langage permet de facilement faire des opération bit à bit. De plus il permet de faire rapidement des opérations élémentaires.
+
+Le problème que l'on a pu avoir avec ce langage c'est lorsque'on a voulu définir des variables plus grande que celle de base en C ( notamment un entier de 512 bits ).
+
 
 ### A5/1
 

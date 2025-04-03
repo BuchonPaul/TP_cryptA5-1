@@ -38,7 +38,21 @@ short xor_l3(int lsfr)
 {
     return i_bit(lsfr, 7) ^ i_bit(lsfr, 20) ^ i_bit(lsfr, 21) ^ i_bit(lsfr, 22);
 }
-
+/**
+ * @brief Initialise les registres de décalage pour le chiffrement A5/1.
+ *
+ * Cette fonction initialise trois registres à décalage (L1, L2 et L3) pour
+ * le protocole de chiffrement A5/1 en fonction de la clé de session et du
+ * compteur de trame. Elle charge la clé de session (64 bits) et le compteur de trame
+ * (22 bits), puis exécute 100 cycles d'initialisation avec un critère de majorité
+ * pour synchroniser les registres.
+ *
+ * @param L1 Le registre de décalage 1.
+ * @param L2 Le registre de décalage 2.
+ * @param L3 Le registre de décalage 3.
+ * @param key La clé de session (64 bits).
+ * @param frame_counter Le compteur de trame (22 bits).
+ */
 LSFR initialize_registers(long long session_key, int frame_counter)
 {
     LSFR l = {
@@ -72,7 +86,21 @@ LSFR initialize_registers(long long session_key, int frame_counter)
     }
     return l;
 }
-
+/**
+ * @brief Effectue un chiffrement/déchiffrement du message avec XOR.
+ *
+ * Cette fonction chiffre ou déchiffre un message en effectuant un XOR entre chaque
+ * caractère du message et un buffer de chiffrement. Elle génère un buffer à partir
+ * des bits produits par les registres de décalage, puis applique le XOR pour modifier
+ * le message d'entrée. Le processus peut être inversé pour déchiffrer le message
+ * avec la même clé et les mêmes paramètres.
+ *
+ * @param message Le message à chiffrer ou déchiffrer.
+ * @param key La clé de session utilisée pour générer le buffer de chiffrement.
+ * @param frame_counter Le compteur de trame, utilisé pour la synchronisation des registres.
+ *
+ * @return Le message chiffré ou déchiffré, sous forme de chaîne de caractères.
+ */
 char *encrypt_decrypt_message(char *message, int session_key, int frame_counter)
 {
     int length = 0;

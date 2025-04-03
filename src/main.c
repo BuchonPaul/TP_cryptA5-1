@@ -9,15 +9,15 @@ int main()
     printf("\n\n--------------Set-up des données publqiues--------------\n");
     mpz_t p_512, p, g;
     mpz_inits(p_512, p, g, NULL);
-    // generate_prime(p_512);
-    mpz_set_str(p_512,
-                "73354658883438629681302852888425819414799977307764540519012033294405083679929453038354"
-                "58008138016530970254318172965357391199557120543758438497838095839321",
-                0);
-    gmp_printf("Clef Secrète sur 512 bits:\t%Zd\n", p_512);
+    generate_prime(p_512);
+    // mpz_set_str(p_512,
+    //             "73354658883438629681302852888425819414799977307764540519012033294405083679929453038354"
+    //             "58008138016530970254318172965357391199557120543758438497838095839321",
+    //             0);
+    gmp_printf("Clef Publique sur 512 bits:\t%Zd\n", p_512);
 
     mpz_tdiv_q_2exp(p, p_512, (512 - 64));
-    gmp_printf("Clef Secrète sur 64 bits:\t%Zd\n", p);
+    gmp_printf("Clef Publique sur 64 bits (64 bis de poids fort de la clef sur 512 bits):\t%Zd\n", p);
 
     mpz_set_ui(g, 3);
     gmp_printf("Générateur:\t%Zd\n", g);
@@ -49,7 +49,6 @@ int main()
     gmp_printf("Alice secret:\t%Zd\n", secret_Alice);
     gmp_printf("Bob secret:\t%Zd\n", secret_Bob);
 
-    // long long session_key = mpz_get_ui(p);
     int frame_counter = 0b1110101011001111001011;
 
     printf("\n################################## Communications #######################################\n");

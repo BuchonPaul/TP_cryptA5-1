@@ -30,25 +30,25 @@ libs:
 		curl -o gmp.tar.xz https://gmplib.org/download/gmp/gmp-6.2.0.tar.xz && \
 		tar xf gmp.tar.xz && \
 		cd gmp-6.2.0 && \
-		./configure --prefix=$(pwd)/../libs/gmp-6.2.0 && \
+		./configure --prefix=$(pwd)/../gmp-local && \
 		make -j$(nproc) && \
 		make install; \
 	else \
 		echo "GMP est déjà installé."; \
 	fi; \
 	# Remplacer libgmp.a dans lib par la version installée
-	if [ -f "libs/gmp-6.2.0/.libs/libgmp.a" ]; then \
+	if [ -f "libs/gmp-6.2.0/lib/libgmp.a" ]; then \
 		echo "Remplacement de libgmp.a dans le répertoire lib..."; \
-		cp libs/gmp-6.2.0/.libs/libgmp.a lib/; \
+		cp libs/gmp-local/lib/libgmp.a lib/; \
 	fi; \
 	# Remplacer gmp.h dans le répertoire header
-	if [ -f "libs/gmp-6.2.0/gmp.h" ]; then \
+	if [ -f "libs/gmp-6.2.0/include/gmp.h" ]; then \
 		echo "Remplacement de gmp.h dans le répertoire header..."; \
-		cp libs/gmp-6.2.0/gmp.h header/; \
+		cp libs/gmp-local/include/gmp.h header/; \
 	fi
 
 # Nettoyage des fichiers générés
 clean:
-	rm -rf $(BUILD_DIR) $(OBJ_DIR) libs/libs/gmp-6.2.0 lib/libgmp.a header/gmp.h
+	rm -rf $(BUILD_DIR) $(OBJ_DIR) libs/gmp-local lib/libgmp.a header/gmp.h
 
 .PHONY: clean all libs
